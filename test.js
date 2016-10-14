@@ -29,4 +29,18 @@ describe('morgan-json', function () {
       'response-time': 'response-time'
     }));
   });
+
+  it('format string of all tokens (with trailers)', function () {
+    var compiled = json(':method :url :status :res[content-length] bytes :response-time ms');
+    var output = compiled(mock);
+
+    assume(output).deep.equals(JSON.stringify({
+      method: 'method',
+      url: 'url',
+      status: 'status',
+      res: 'res content-length bytes',
+      'response-time': 'response-time ms'
+    }));
+  });
+
 });
