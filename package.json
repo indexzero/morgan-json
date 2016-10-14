@@ -26,5 +26,8 @@
     "istanbul": "^0.4.5",
     "mocha": "^3.1.2",
     "morgan": "^1.7.0"
+  },
+  "dependencies": {
+    "diagnostics": "^1.0.1"
   }
 }
