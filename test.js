@@ -16,6 +16,11 @@ var mock = {
   'response-time': function () { return 'response-time' },
 };
 
+//
+// Invalid argument message that morgan-json outputs.
+//
+var invalidMsg = 'argument format must be a string or an object';
+
 describe('morgan-json', function () {
   it('format string of all tokens', function () {
     var compiled = json(':method :url :status :res[content-length] :response-time');
@@ -43,4 +48,78 @@ describe('morgan-json', function () {
     }));
   });
 
+  it('format object of all single tokens (no trailers)', function () {
+    var compiled = json({
+      method: ':method',
+      url: ':url',
+      status: ':status',
+      'response-time': ':response-time',
+      length: ':res[content-length]'
+    });
+
+    var output = compiled(mock);
+    assume(output).deep.equals(JSON.stringify({
+      method: 'method',
+      url: 'url',
+      status: 'status',
+      'response-time': 'response-time',
+      length: 'res content-length'
+    }))
+  });
+
+  it('format object with multiple tokens', function () {
+    var compiled = json({
+      short: ':method :url :status',
+      'response-time': ':response-time',
+      length: ':res[content-length]'
+    });
+
+    var output = compiled(mock);
+    assume(output).deep.equals(JSON.stringify({
+      short: 'method url status',
+      'response-time': 'response-time',
+      length: 'res content-length'
+    }))
+  });
+
+  it('format object of all tokens (with trailers)', function () {
+    var compiled = json({
+      method: 'GET :method',
+      url: '-> /:url',
+      status: 'Code :status',
+      'response-time': ':response-time ms',
+      length: ':res[content-length]'
+    });
+
+    var output = compiled(mock);
+    assume(output).deep.equals(JSON.stringify({
+      method: 'GET method',
+      url: '-> /url',
+      status: 'Code status',
+      'response-time': 'response-time ms',
+      length: 'res content-length'
+    }))
+  });
+
+  describe('Invalid arguments', function () {
+    it('throws with null', function () {
+      assume(function () { json(null); }).throws(invalidMsg);
+    });
+
+    it('throws with Boolean', function () {
+      assume(function () { json(false); }).throws(invalidMsg);
+      assume(function () { json(true); }).throws(invalidMsg);
+    });
+
+    it('throws with Number', function () {
+      assume(function () { json(0); }).throws(invalidMsg);
+      assume(function () { json(1); }).throws(invalidMsg);
+      assume(function () { json(Number.MAX_VALUE); }).throws(invalidMsg);
+      assume(function () { json(Number.POSITIVE_INFINITY); }).throws(invalidMsg);
+    });
+
+    it('throws with empty string', function () {
+      assume(function () { json(''); }).throws('argument format string must not be empty');
+    });
+  });
 });
