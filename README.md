@@ -5,6 +5,14 @@ A variant of `morgan.compile` that provides format functions that output JSON
 ## Usage
 
 ``` js
+const json = require('morgan-json');
+// json(string, opts);
+// json(object, opts);
+```
+
+To put that into a real world example:
+
+``` js
 const morgan = require('morgan');
 const express = require('express');
 const json = require('morgan-json');
@@ -19,7 +27,7 @@ const format = json({
 app.use(morgan(format));
 app.get('/', function (req, res) {
   res.send('hello, world!')
-})
+});
 ```
 
 When requests to this `express` application come in `morgan` will output a JSON object that looks
@@ -64,7 +72,7 @@ will be included in the value for that key in JSON. For example:
 const morgan = require('morgan');
 const json = require('morgan-json');
 
-const format = json(':method :url :status :res[content-length] bytes :response-time ms')
+const format = json(':method :url :status :res[content-length] bytes :response-time ms');
 
 app.use(morgan(format));
 ```
@@ -73,6 +81,31 @@ Will output a JSON object that has keys `method`, `url`, `status`, `res` and `re
 
 ```
 {"method":"GET","url":"/","status":"200","res":"10 bytes","response-time":"2 ms"}
+```
+
+### Returning strings vs. Objects
+
+By default functions returned by `morgan-json` will return strings from `JSON.stringify`. In some
+cases you may want object literals (e.g. if you perform stringification in another layer of your logger). In this case just provide `{ stringify: false }`:
+
+``` js
+``` js
+const morgan = require('morgan');
+const winston = require('winston');
+const json = require('morgan-json');
+
+const format = json(':method :url :status', { stringify: false });
+
+app.use(morgan(format, {
+  stream: {
+    write: function (obj) {
+      winston.info(obj);
+    }
+  }
+}));
+```
+
+Will output a JSON object that has keys
 ```
 
 ## Tests

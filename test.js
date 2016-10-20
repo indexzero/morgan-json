@@ -79,7 +79,7 @@ describe('morgan-json', function () {
       short: 'method url status',
       'response-time': 'response-time',
       length: 'res content-length'
-    }))
+    }));
   });
 
   it('format object of all tokens (with trailers)', function () {
@@ -98,7 +98,37 @@ describe('morgan-json', function () {
       status: 'Code status',
       'response-time': 'response-time ms',
       length: 'res content-length'
-    }))
+    }));
+  });
+
+  describe('{ stringify: false }', function () {
+    it('format object returns an object', function () {
+      var compiled = json({
+        short: ':method :url :status',
+        'response-time': ':response-time',
+        length: ':res[content-length]'
+      }, { stringify: false });
+
+      var output = compiled(mock);
+      assume(output).is.an('object');
+      assume(output).deep.equals({
+        short: 'method url status',
+        'response-time': 'response-time',
+        length: 'res content-length'
+      });
+    });
+
+    it('format string returns an object', function () {
+      var compiled = json(':method :url :status', { stringify: false });
+
+      var output = compiled(mock);
+      assume(output).is.an('object');
+      assume(output).deep.equals({
+        method: 'method',
+        url: 'url',
+        status: 'status'
+      });
+    });
   });
 
   describe('Invalid arguments', function () {
