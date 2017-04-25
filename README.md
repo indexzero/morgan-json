@@ -89,7 +89,6 @@ By default functions returned by `morgan-json` will return strings from `JSON.st
 cases you may want object literals (e.g. if you perform stringification in another layer of your logger). In this case just provide `{ stringify: false }`:
 
 ``` js
-``` js
 const morgan = require('morgan');
 const winston = require('winston');
 const json = require('morgan-json');
@@ -106,7 +105,6 @@ app.use(morgan(format, {
 ```
 
 Will output a JSON object that has keys
-```
 
 ## Tests
 
