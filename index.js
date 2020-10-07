@@ -101,26 +101,45 @@ var getValueByType = {
 };
 
 function getStringValue(token) {
-  var assignment = '"' + token.value.replace(/:([-\w]{2,})(?:\[([^\]]+)\])?/g, function (_, name, arg) {
-    var tokenArguments = 'req, res';
-    var tokenFunction = 'tokens[' + String(JSON.stringify(name)) + ']';
-
-    if (arg !== undefined) {
-      tokenArguments += ', ' + String(JSON.stringify(arg));
-    }
-
-    var defaultValue = token.noDefault ? 
-      ' || ""' : 
-      ' || ' + JSON.stringify(token.defaultValue);
-
-    return '" + (' + tokenFunction + '(' + tokenArguments + ')' + defaultValue + ') + "';
-  }) + '"';
-
-  return assignment;
+  return getValue(token, {
+    prefix: '"',
+    postfix: '"',
+    preToken: '" + (',
+    postTokenValue: ') + "',
+    noDefaultValue: ' || ""'
+  });
 }
 
 function getPassthroughValue(token) {
-  var assignment = token.value.replace(/:([-\w]{2,})(?:\[([^\]]+)\])?/g, function (_, name, arg) {
+  return getValue(token);
+}
+
+function getTypeConvertedValue(token, key) {
+  return getValue(token, {
+    preToken: '(convert["' + key + '"](',
+    postToken: function (name, arg) {
+      var nameString = String(JSON.stringify(name));
+      var convertArgs = ', ' + nameString;
+  
+      if (arg !== undefined) {
+        convertArgs += ', ' + String(JSON.stringify(arg));
+      }
+      return convertArgs + ')';
+    },
+    postTokenValue: ')'
+  });
+}
+
+function getValue(token, opts) {
+  opts = opts || {};
+  var prefix = opts.prefix || '';
+  var postfix = opts.postfix || '';
+  var preToken = opts.preToken || '(';
+  var postToken = opts.postToken || function () { return ''; }
+  var postTokenValue = opts.postTokenValue || ')';
+  var noDefaultValue = opts.noDefaultValue || '';
+
+  var assignment = prefix + token.value.replace(/:([-\w]{2,})(?:\[([^\]]+)\])?/g, function (_, name, arg) {
     var tokenArguments = 'req, res';
     var tokenFunction = 'tokens[' + String(JSON.stringify(name)) + ']';
 
@@ -129,32 +148,10 @@ function getPassthroughValue(token) {
     }
 
     var defaultValue = token.noDefault ? 
-      '' : 
+      noDefaultValue : 
       ' || ' + JSON.stringify(token.defaultValue);
-    return '(' + tokenFunction + '(' + tokenArguments + ')' + defaultValue + ')';
-  });
-
-  return assignment;
-}
-
-function getTypeConvertedValue(token, key) {
-  var assignment = token.value.replace(/:([-\w]{2,})(?:\[([^\]]+)\])?/g, function (_, name, arg) {
-    var tokenArguments = 'req, res';
-    var name = String(JSON.stringify(name));
-    var tokenFunction = 'tokens[' + name + ']';
-    var convertArgs = name;
-
-    if (arg !== undefined) {
-      var newArgs = ', ' + String(JSON.stringify(arg))
-      tokenArguments += newArgs;
-      convertArgs += newArgs;
-    }
-
-    var defaultValue = token.noDefault ? 
-      '' : 
-      ' || ' + JSON.stringify(token.defaultValue);
-    return '(convert["' + key + '"](' + tokenFunction + '(' + tokenArguments + '), ' + convertArgs + ')' + defaultValue + ')';
-  });
+    return preToken + tokenFunction + '(' + tokenArguments + ')' + postToken(name, arg) + defaultValue + postTokenValue;
+  }) + postfix;
 
   return assignment;
 }

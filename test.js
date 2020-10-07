@@ -124,11 +124,10 @@ describe('morgan-json', function () {
   });
 
   describe('object tokens', function () {
-    const typedMock = {
+    var typedMock = {
       method: function () { return 'method' },
       url:    function () { return 'url' },
       status: function () { return 200 },
-      res:    function (req, res, arg) { return ['res', arg].join(' ') },
       req:    function (req, res, arg) { return ({
         'content-length': 123,
         'accept-lang': '5.67',
@@ -399,7 +398,8 @@ describe('morgan-json', function () {
             type: function (val, name, arg) {
               assume(name).equals('req');
               assume(arg).equals('none');
-              return val && parseFloat(val);
+              assume(val).is.null();
+              return null;
             }
           }
         });
@@ -417,7 +417,8 @@ describe('morgan-json', function () {
             type: function (val, name, arg) {
               assume(name).equals('req');
               assume(arg).equals('none');
-              return val && parseFloat(val);
+              assume(val).is.null();
+              return null;
             },
             defaultValue: 987
           }
@@ -466,7 +467,8 @@ describe('morgan-json', function () {
             type: function (val, name, arg) {
               assume(name).equals('req');
               assume(arg).equals('none');
-              return val && parseFloat(val);
+              assume(val).is.null();
+              return null;
             },
             noDefault: true
           }
