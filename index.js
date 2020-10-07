@@ -140,16 +140,20 @@ function getPassthroughValue(token) {
 function getTypeConvertedValue(token, key) {
   var assignment = token.value.replace(/:([-\w]{2,})(?:\[([^\]]+)\])?/g, function (_, name, arg) {
     var tokenArguments = 'req, res';
-    var tokenFunction = 'tokens[' + String(JSON.stringify(name)) + ']';
+    var name = String(JSON.stringify(name));
+    var tokenFunction = 'tokens[' + name + ']';
+    var convertArgs = name;
 
     if (arg !== undefined) {
-      tokenArguments += ', ' + String(JSON.stringify(arg));
+      var newArgs = ', ' + String(JSON.stringify(arg))
+      tokenArguments += newArgs;
+      convertArgs += newArgs;
     }
 
     var defaultValue = token.noDefault ? 
       '' : 
       ' || ' + JSON.stringify(token.defaultValue);
-    return '(convert["' + key + '"](' + tokenFunction + '(' + tokenArguments + '))' + defaultValue + ')';
+    return '(convert["' + key + '"](' + tokenFunction + '(' + tokenArguments + '), ' + convertArgs + ')' + defaultValue + ')';
   });
 
   return assignment;

@@ -312,13 +312,16 @@ describe('morgan-json', function () {
         var compiled = json({
           number: {
             value: ':numString',
-            type: function (val) { 
+            type: function (val, name) {
+              assume(name).equals('numString');
               return parseInt(val, 10);
             } 
           },
           another: {
             value: ':req[accept-lang]',
-            type: function (val) { 
+            type: function (val, name, arg) {
+              assume(name).equals('req');
+              assume(arg).equals('accept-lang');
               return parseFloat(val);
             } 
           }
@@ -393,7 +396,9 @@ describe('morgan-json', function () {
         var compiled = json({
           empty: {
             value: ':req[none]',
-            type: function (val) { 
+            type: function (val, name, arg) {
+              assume(name).equals('req');
+              assume(arg).equals('none');
               return val && parseFloat(val);
             }
           }
@@ -409,7 +414,9 @@ describe('morgan-json', function () {
         var compiled = json({
           empty: {
             value: ':req[none]',
-            type: function (val) { 
+            type: function (val, name, arg) {
+              assume(name).equals('req');
+              assume(arg).equals('none');
               return val && parseFloat(val);
             },
             defaultValue: 987
@@ -456,7 +463,9 @@ describe('morgan-json', function () {
         var compiled = json({
           empty: {
             value: ':req[none]',
-            type: function (val) { 
+            type: function (val, name, arg) {
+              assume(name).equals('req');
+              assume(arg).equals('none');
               return val && parseFloat(val);
             },
             noDefault: true
