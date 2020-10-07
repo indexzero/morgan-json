@@ -52,7 +52,7 @@ module.exports = function compile (format, opts) {
  *
  * Adopted from `morgan.compile` from `morgan` under MIT.
  *
- * @param {string|Object} format
+ * @param {Object} format
  * @param {Object} opts Options for how things are returned.
  *   - 'stringify': (default: true) If false returns an object literal
  * @return {function}
@@ -67,17 +67,24 @@ function compileObject (format, opts) {
 
   var keys = Object.keys(format);
   var stringify = opts.stringify !== false ? 'JSON.stringify' : '';
+  var conversionFunctions = Object.create(null);
   var js = '  "use strict"\n  return ' + stringify + '({' + keys.map(function (key, i) {
-    var assignment = '\n    "' + key + '": "' + format[key].replace(/:([-\w]{2,})(?:\[([^\]]+)\])?/g, function (_, name, arg) {
-      var tokenArguments = 'req, res';
-      var tokenFunction = 'tokens[' + String(JSON.stringify(name)) + ']';
+    var token = Object.assign(
+      { type: 'string', defaultValue: '-', required: true },
+      (typeof format[key] === 'object') ? format[key] : {
+        value: format[key]
+      });
 
-      if (arg !== undefined) {
-        tokenArguments += ', ' + String(JSON.stringify(arg));
-      }
+    var getValue = getValueByType[token.type];
+    if (typeof token.type === 'function') {
+      getValue = getTypeConvertedValue;
+      conversionFunctions[key] = token.type;
+    }
+    if (!getValue) {
+      throw new Error('invalid "type" specified for property: ' + key);
+    }
 
-      return '" + (' + tokenFunction + '(' + tokenArguments + ') || "-") + "';
-    }) + '"';
+    var assignment = '\n    "' + key + '": ' + getValue(token, key);
 
     return assignment;
   }) + '\n  })';
@@ -85,5 +92,66 @@ function compileObject (format, opts) {
   debug('\n%s', js);
 
   // eslint-disable-next-line no-new-func
-  return new Function('tokens, req, res', js);
+  return new Function('convert, tokens, req, res', js).bind(null, conversionFunctions);
 };
+
+var getValueByType = {
+  'string': getStringValue,
+  '*': getPassthroughValue
+};
+
+function getStringValue(token) {
+  var assignment = '"' + token.value.replace(/:([-\w]{2,})(?:\[([^\]]+)\])?/g, function (_, name, arg) {
+    var tokenArguments = 'req, res';
+    var tokenFunction = 'tokens[' + String(JSON.stringify(name)) + ']';
+
+    if (arg !== undefined) {
+      tokenArguments += ', ' + String(JSON.stringify(arg));
+    }
+
+    var defaultValue = token.noDefault ? 
+      ' || ""' : 
+      ' || ' + JSON.stringify(token.defaultValue);
+
+    return '" + (' + tokenFunction + '(' + tokenArguments + ')' + defaultValue + ') + "';
+  }) + '"';
+
+  return assignment;
+}
+
+function getPassthroughValue(token) {
+  var assignment = token.value.replace(/:([-\w]{2,})(?:\[([^\]]+)\])?/g, function (_, name, arg) {
+    var tokenArguments = 'req, res';
+    var tokenFunction = 'tokens[' + String(JSON.stringify(name)) + ']';
+
+    if (arg !== undefined) {
+      tokenArguments += ', ' + String(JSON.stringify(arg));
+    }
+
+    var defaultValue = token.noDefault ? 
+      '' : 
+      ' || ' + JSON.stringify(token.defaultValue);
+    return '(' + tokenFunction + '(' + tokenArguments + ')' + defaultValue + ')';
+  });
+
+  return assignment;
+}
+
+function getTypeConvertedValue(token, key) {
+  var assignment = token.value.replace(/:([-\w]{2,})(?:\[([^\]]+)\])?/g, function (_, name, arg) {
+    var tokenArguments = 'req, res';
+    var tokenFunction = 'tokens[' + String(JSON.stringify(name)) + ']';
+
+    if (arg !== undefined) {
+      tokenArguments += ', ' + String(JSON.stringify(arg));
+    }
+
+    var defaultValue = token.noDefault ? 
+      '' : 
+      ' || ' + JSON.stringify(token.defaultValue);
+    return '(convert["' + key + '"](' + tokenFunction + '(' + tokenArguments + '))' + defaultValue + ')';
+  });
+
+  return assignment;
+}
+
