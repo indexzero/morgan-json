@@ -207,7 +207,7 @@ app.use(morgan(format));
 Will output a JSON object that has keys `method`, `req-length`:
 
 ``` json
-{"method":"GET","req-length":16536}
+{"method":"GET","req-length":16536,"response-time":2}
 ```
 
 #### `defaultValue` option
