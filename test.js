@@ -3,6 +3,8 @@
 var assume = require('assume');
 var morgan = require('morgan');
 var json = require('./');
+const converters = require('./converters');
+var converts = require('./converters');
 
 //
 // A simple mock "morgan" object which returns deterministic
@@ -134,8 +136,10 @@ describe('morgan-json', function () {
         none: null
       })[arg] },
       'response-time': function () { return 9.001 },
-      numString: function () { return "404" },
-      empty:  function () { return null },
+      floatString: function () { return '3.14159'; },
+      numString: function () { return '404' },
+      nonNumString: function () { return 'qwerty'; },
+      empty:  function () { return null }
     };
 
     describe('type support', function () {
@@ -332,6 +336,63 @@ describe('morgan-json', function () {
           another: 5.67
         }));
       });
+
+      describe('built-in converters', function () {
+        it('has the expected converters', function () {
+          assume(Object.keys(converters)).to.have.length(2);
+          assume(converters.integer).is.a('function');
+          assume(converters.float).is.a('function');
+        })
+
+        it('converts integers', function () {
+          var compiled = json({
+            number: {
+              value: ':numString',
+              type: converters.integer
+            },
+            another: {
+              value: ':req[content-length]',
+              type: converters.integer
+            },
+            third: {
+              value: ':nonNumString',
+              type: converters.integer
+            }
+          });
+  
+          var output = compiled(typedMock);
+          assume(output).deep.equals(JSON.stringify({
+            number: 404,
+            another: 123,
+            third: '-'
+          }));
+        });
+
+
+        it('converts floats', function () {
+          var compiled = json({
+            number: {
+              value: ':response-time',
+              type: converters.float
+            },
+            another: {
+              value: ':floatString',
+              type: converters.float
+            },
+            third: {
+              value: ':nonNumString',
+              type: converters.float
+            }
+          });
+  
+          var output = compiled(typedMock);
+          assume(output).deep.equals(JSON.stringify({
+            number: 9.001,
+            another: 3.14159,
+            third: '-'
+          }));
+        });
+      });
     });
 
     describe('default values', function () {
@@ -478,6 +539,63 @@ describe('morgan-json', function () {
         assume(output).deep.equals(JSON.stringify({
           empty: null
         }));
+      });
+
+      describe('built-in converters', function () {
+        it('converts integers with various defaults', function () {
+          var compiled = json({
+            number: {
+              value: ':nonNumString',
+              type: converters.integer,
+              noDefault: true
+            },
+            another: {
+              value: ':nonNumString',
+              type: converters.integer,
+              defaultValue: 0
+            },
+            third: {
+              value: ':nonNumString',
+              type: converters.integer,
+              defaultValue: 5
+            }
+          });
+  
+          var output = compiled(typedMock);
+          assume(output).deep.equals(JSON.stringify({
+            number: null,
+            another: 0,
+            third: 5
+          }));
+        });
+
+
+        it('converts floats with various defaults', function () {
+          var compiled = json({
+            number: {
+              value: ':nonNumString',
+              type: converters.float,
+              noDefault: true
+            },
+            another: {
+              value: ':nonNumString',
+              type: converters.float,
+              defaultValue: 0
+            },
+            third: {
+              value: ':nonNumString',
+              type: converters.float,
+              defaultValue: 5.1
+            }
+          });
+  
+          var output = compiled(typedMock);
+          assume(output).deep.equals(JSON.stringify({
+            number: null,
+            another: 0,
+            third: 5.1
+          }));
+        });
       });
     });
   });
