@@ -34,7 +34,7 @@ When requests to this `express` application come in `morgan` will output a JSON 
 like:
 
 ``` json
-{"short":"GET / 200","length":"200","response-time":"2 ms"}
+{"short":"GET / 200","length":"200","response-time":"2.1 ms"}
 ```
 
 ### Format objects
@@ -59,7 +59,7 @@ app.use(morgan(format));
 Will output a JSON object that has keys `short`, `length` and `response-time`:
 
 ``` json
-{"short":"GET / 200","length":"200","response-time":"2 ms"}
+{"short":"GET / 200","length":"200","response-time":"2.1 ms"}
 ```
 
 ### Format strings
@@ -80,7 +80,7 @@ app.use(morgan(format));
 Will output a JSON object that has keys `method`, `url`, `status`, `res` and `response-time`:
 
 ``` json
-{"method":"GET","url":"/","status":"200","res":"10 bytes","response-time":"2 ms"}
+{"method":"GET","url":"/","status":"200","res":"10 bytes","response-time":"2.1 ms"}
 ```
 
 ### Returning strings vs. Objects
@@ -136,7 +136,7 @@ app.use(morgan(format));
 Will output a JSON object that has keys `method`, `req-length` and `response-time`:
 
 ``` json
-{"method":"GET","req-length":"16536","response-time":"2 ms"}
+{"method":"GET","req-length":"16536","response-time":"2.1 ms"}
 ```
 
 #### `type` option
@@ -168,7 +168,7 @@ app.use(morgan(format));
 Will output a JSON object that has keys `method`, `req-length` and `response-time` (note that `req-length` is still a string since it's reading a header value that is usually typed as a string):
 
 ``` json
-{"method":"GET","req-length":"16536","response-time":2}
+{"method":"GET","req-length":"16536","response-time":2.1}
 ```
 
 ##### `type` converter options
@@ -204,10 +204,42 @@ const format = json({
 app.use(morgan(format));
 ```
 
-Will output a JSON object that has keys `method`, `req-length`:
+Will output a JSON object that has keys `method`, `req-length`, `response-time`:
 
 ``` json
-{"method":"GET","req-length":16536,"response-time":2}
+{"method":"GET","req-length":16536,"response-time":2.1}
+```
+
+##### Built-in `type` converters
+
+There are a few type converters provided for common use cases:
+
+``` js
+const morgan = require('morgan');
+const json = require('morgan-json');
+const converters = require('morgan-json/converters');
+
+const format = json({
+  method: {
+    value: ':method',
+    type: 'string'
+  },
+  'req-length': {
+    value: ':req[content-length]',
+    type: converters.integer,
+  'response-time': {
+    value: ':response-time',
+    type: converters.float
+  }
+});
+
+app.use(morgan(format));
+```
+
+Will output a JSON object that has keys `method`, `req-length`, `response-time`:
+
+``` json
+{"method":"GET","req-length":16536,"response-time":2.1}
 ```
 
 #### `defaultValue` option
