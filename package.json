@@ -4,7 +4,7 @@
   "description": "A variant of `morgan.compile` that provides format functions that output JSON",
   "main": "index.js",
   "scripts": {
-    "test": "istanbul cover _mocha test.js"
+    "test": "nyc --reporter=text --reporter=json-summary mocha test.js"
   },
   "repository": {
     "type": "git",
@@ -22,12 +22,12 @@
   },
   "homepage": "https://github.com/indexzero/morgan-json#readme",
   "devDependencies": {
-    "assume": "^1.4.1",
-    "istanbul": "^0.4.5",
-    "mocha": "^3.1.2",
-    "morgan": "^1.7.0"
+    "assume": "^2.2.0",
+    "mocha": "^9.2.2",
+    "morgan": "^1.7.0",
+    "nyc": "^15.1.0"
   },
   "dependencies": {
-    "diagnostics": "^1.0.1"
+    "diagnostics": "^2.0.2"
   }
 }
