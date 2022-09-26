@@ -25,7 +25,10 @@ module.exports = function compile (format, opts) {
 
   opts = opts || {};
 
-  var fmt = format.replace(/"/g, '\\"');
+  var fmt = format
+    .replace(/"/g, '\\"')
+    // remove everything until the first valid token
+    .replace(/^.*?(?=:)|.*/, '');
   var stringify = opts.stringify !== false ? 'JSON.stringify' : '';
   var js = '  "use strict"\n  return ' + stringify + '({' + fmt.replace(/:([-\w]{2,})(?:\[([^\]]+)\])?([^:]+)?/g, function (_, name, arg, trail, offset, str) {
     var tokenName = String(JSON.stringify(name));

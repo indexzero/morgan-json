@@ -152,4 +152,12 @@ describe('morgan-json', function () {
       assume(function () { json(''); }).throws('argument format string must not be empty');
     });
   });
+
+  describe('Malformed input', function () {
+    it('prevent arbitrary code execution (CVE-2022-25921)', function () {
+      var malformedInput = '}) + global.maliciousFunction() + ({'
+  
+      assume(function () { json(malformedInput)(''); }).not.throws('global.maliciousFunction is not a function');
+    });
+  });
 });
